@@ -15,7 +15,8 @@ import os
 import time
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"
-
+os.environ["CUDA_AVAILABLE_DEVICES"]="2" 
+# os.environ["CUDA_AVAILABLE_DEVICES"] = str(i)
 class RepresentationType(Enum):
     VOXEL = auto()
     STEPAN = auto()
@@ -141,13 +142,13 @@ def main(args: DictConfig):
 
             # Apply random flip left right
             if random.random() > 0.5:
-                event_image = torch.fliplr(event_image, dims=[3])
-                ground_truth_flow = torch.fliplr(ground_truth_flow, dims=[3])
+                event_image = torch.fliplr(event_image)
+                ground_truth_flow = torch.fliplr(ground_truth_flow)
                 
             # Apply random flip up down
             if random.random() > 0.5:
-                event_image = torch.flipud(event_image, dims=[3])
-                ground_truth_flow = torch.flipud(ground_truth_flow, dims=[3])
+                event_image = torch.flipud(event_image)
+                ground_truth_flow = torch.flipud(ground_truth_flow)
             
             flow = model(event_image) # [B, 2, 480, 640]
             loss: torch.Tensor = compute_epe_error(flow, ground_truth_flow)
