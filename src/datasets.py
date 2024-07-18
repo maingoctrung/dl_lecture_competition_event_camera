@@ -580,6 +580,7 @@ class DatasetProvider:
         logger.write_line("Number of Train Sequences: {}".format(
             len(self.train_dataset)), True)
 
+
 def train_collate(sample_list):
     batch = dict()
     for field_name in sample_list[0]:
