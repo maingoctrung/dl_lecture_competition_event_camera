@@ -14,6 +14,7 @@ from typing import Dict, Any
 import os
 import time
 
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"
 
 class RepresentationType(Enum):
     VOXEL = auto()
@@ -125,64 +126,6 @@ def main(args: DictConfig):
     )
     print(model)
     
-    # ------------------
-    #   optimizer
-    # ------------------
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.train.initial_learning_rate, weight_decay=args.train.weight_decay)
-    # ------------------
-    #   Start training
-    # ------------------
-    model.train()
-    for epoch in range(args.train.epochs):
-        total_loss = 0
-        print("on epoch: {}".format(epoch+1))
-        for i, batch in enumerate(tqdm(train_data)):
-            batch: Dict[str, Any]
-            event_image = batch["event_volume"].to(device) # [B, 4, 480, 640]
-            ground_truth_flow = batch["flow_gt"].to(device) # [B, 2, 480, 640]
-            flow = model(event_image) # [B, 2, 480, 640]
-            loss: torch.Tensor = compute_epe_error(flow, ground_truth_flow)
-            print(f"batch {i} loss: {loss.item()}")
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-            total_loss += loss.item()
-        print(f'Epoch {epoch+1}, Loss: {total_loss / len(train_data)}')
-
-    # Create the directory if it doesn't exist
-    if not os.path.exists('checkpoints'):
-        os.makedirs('checkpoints')
-    
-    current_time = time.strftime("%Y%m%d%H%M%S")
-    model_path = f"checkpoints/model_{current_time}.pth"
-    torch.save(model.state_dict(), model_path)
-    print(f"Model saved to {model_path}")
-
-    # ------------------
-    #   Start predicting
-    # ------------------
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    model.eval()
-    flow: torch.Tensor = torch.tensor([]).to(device)
-    with torch.no_grad():
-        print("start test")
-        for batch in tqdm(test_data):
-            batch: Dict[str, Any]
-            event_image = batch["event_volume"].to(device)
-            batch_flow = model(event_image) # [1, 2, 480, 640]
-            flow = torch.cat((flow, batch_flow), dim=0)  # [N, 2, 480, 640]
-        print("test done")
-    # ------------------
-    #  save submission
-    # ------------------
-    t = time.localtime()
-    file_name = f"submission{t}"
-    save_optical_flow_to_npy(flow, file_name)
-    print(model)
-    # ------------------
-    #   optimizer
-    # ------------------
     optimizer = torch.optim.Adam(model.parameters(), lr=args.train.initial_learning_rate, weight_decay=args.train.weight_decay)
     # ------------------
     #   Start training
@@ -243,7 +186,7 @@ def main(args: DictConfig):
     #  save submission
     # ------------------
     t = time.localtime()
-    file_name = f"submission{current_time}"
+    file_name = f"new_submission{current_time}"
     save_optical_flow_to_npy(flow, file_name)
 
 if __name__ == "__main__":
