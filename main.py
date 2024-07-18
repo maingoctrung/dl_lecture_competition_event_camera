@@ -142,13 +142,15 @@ def main(args: DictConfig):
 
             # Apply random flip left right
             if random.random() > 0.5:
-                event_image = torch.fliplr(event_image)
-                ground_truth_flow = torch.fliplr(ground_truth_flow)
+                for j in range(event_image.size(0)):
+                    event_image[j] = torch.fliplr(event_image[j])
+                    ground_truth_flow[j] = torch.fliplr(ground_truth_flow[j])
                 
             # Apply random flip up down
             if random.random() > 0.5:
-                event_image = torch.flipud(event_image)
-                ground_truth_flow = torch.flipud(ground_truth_flow)
+                for j in range(event_image.size(0)):
+                    event_image[j] = torch.flipud(event_image[j])
+                    ground_truth_flow[j] = torch.flipud(ground_truth_flow[j])
             
             flow = model(event_image) # [B, 2, 480, 640]
             loss: torch.Tensor = compute_epe_error(flow, ground_truth_flow)
